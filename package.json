@@ -2,7 +2,7 @@
   "name": "firsthomework",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://harryyang1008.github.io/GDG",
+  "homepage": "https://HarryYang1008.github.io/GDG",
   "dependencies": {
     "@mapbox/togeojson": "^0.16.0",
     "@testing-library/jest-dom": "^5.17.0",
