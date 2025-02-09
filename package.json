@@ -1,0 +1,55 @@
+{
+  "name": "firsthomework",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "https://HarryYang1008.github.io/Business-Chagllenge-Group10-MVP",
+  "dependencies": {
+    "@mapbox/togeojson": "^0.16.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "buffer": "^6.0.3",
+    "dbf": "^0.2.0",
+    "fs": "^0.0.1-security",
+    "html2canvas": "^1.4.1",
+    "leaflet": "^1.9.4",
+    "leaflet-easyprint": "^2.1.9",
+    "parse-kml": "^1.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "shapefile": "^0.6.6",
+    "shpjs": "^4.0.4",
+    "web-vitals": "^2.1.4",
+    "xmldom": "^0.6.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "gh-pages": "^6.2.0"
+  }
+}
