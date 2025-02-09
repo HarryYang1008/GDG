@@ -109,32 +109,109 @@ body {
   flex-direction: column;
 }
 
+/* Calendar Header */
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 10px 20px;
+  background-color: #202124;
+  color: white;
+  border-bottom: 1px solid #444;
 }
 
-.calendar-header h2 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.calendar-header button {
-  background: #007bff;
+/* Today Button */
+.today-button {
+  background-color: #1a73e8;
   color: white;
   border: none;
-  padding: 5px 10px;
-  font-size: 16px;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.today-button:hover {
+  background-color: #155ab2;
+}
+
+/* Month and Year Display */
+.month-year-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.month-year-display h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.arrow-button {
+  background: none;
+  color: white;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.arrow-button:hover {
+  color: #1a73e8;
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-button {
+  background-color: #303134;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.view-button:hover {
+  background-color: #444;
+}
+
+.settings-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.settings-button:hover {
+  color: #1a73e8;
+}
+
+/* Highlight Today */
+.calendar-day {
+  background-color: #fff;
+  color: black;
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
   cursor: pointer;
   border-radius: 5px;
 }
 
-.calendar-header button:hover {
-  background: #0056b3;
+.calendar-day.today {
+  background-color: #1a73e8;
+  color: white;
 }
 
+.calendar-day:hover {
+  background-color: #155ab2;
+  color: white;
+}
 /* Weekdays Row */
 .calendar-weekdays {
   display: grid;
@@ -313,4 +390,18 @@ body {
 
 .save-button:hover {
   background: #0b63ce;
+}
+
+/* 高亮当天日期卡片 */
+.calendar-day.today {
+  background-color: #1a73e8; /* 自定义底色 */
+  color: white; /* 自定义文字颜色 */
+  border: 2px solid #155ab2; /* 自定义边框颜色 */
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.calendar-day.today:hover {
+  background-color: #155ab2; /* 鼠标悬浮时的颜色 */
+  color: white;
 }

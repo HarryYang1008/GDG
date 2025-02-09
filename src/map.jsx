@@ -13,6 +13,12 @@ class MapComponent extends Component {
     };
   }
 
+  goToToday = () => {
+    const today = new Date();
+    this.setState({ currentDate: today, selectedDate: today });
+  };
+  
+
   // Change the month
   changeMonth = (direction) => {
     const { currentDate } = this.state;
@@ -44,34 +50,37 @@ class MapComponent extends Component {
 
   // Render days in the calendar
   renderDays = () => {
-    const { currentDate, events } = this.state;
+    const { currentDate } = this.state;
+    const today = new Date(); // 获取今天的日期
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     const daysInMonth = endOfMonth.getDate();
     const startDayOfWeek = startOfMonth.getDay();
-
+  
     const days = [];
-    // Fill empty slots before the 1st day of the month
+    // 填充空白占位符，确保日期与星期对齐
     for (let i = 0; i < startDayOfWeek; i++) {
       days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
     }
-
-    // Fill the actual days of the month
+  
+    // 填充当前月份的日期
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
-      const dateKey = date.toISOString().split("T")[0];
+      const isToday =
+        date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear(); // 判断是否为今天
       days.push(
         <div
           key={i}
-          className={`calendar-day ${events[dateKey] ? "has-event" : ""}`}
+          className={`calendar-day ${isToday ? "today" : ""}`}
           onClick={() => this.selectDate(date)}
         >
           <span>{i}</span>
-          {events[dateKey] && <div className="event-indicator"></div>}
         </div>
       );
     }
-
+  
     return days;
   };
 
@@ -100,13 +109,34 @@ class MapComponent extends Component {
 
         {/* Main Calendar */}
         <main className="calendar-container">
-          <div className="calendar-header">
-            <button onClick={() => this.changeMonth(-1)}>{"<"}</button>
+        <div className="calendar-header">
+          {/* Today Button */}
+          <button className="today-button" onClick={() => this.goToToday()}>
+            Today
+          </button>
+
+          {/* Month and Year Display */}
+          <div className="month-year-display">
+            <button className="arrow-button" onClick={() => this.changeMonth(-1)}>
+              {"<"}
+            </button>
             <h2>
               {currentMonth} {currentYear}
             </h2>
-            <button onClick={() => this.changeMonth(1)}>{">"}</button>
+            <button className="arrow-button" onClick={() => this.changeMonth(1)}>
+              {">"}
+            </button>
           </div>
+
+          {/* Additional Buttons */}
+          <div className="header-actions">
+            <button className="view-button">Month</button>
+            <button className="view-button">Week</button>
+            <button className="view-button">Day</button>
+            <button className="settings-button">⚙️</button>
+          </div>
+        </div>
+
 
           {/* Weekdays Row */}
           <div className="calendar-weekdays">
