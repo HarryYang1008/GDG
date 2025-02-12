@@ -83,7 +83,7 @@ const ChatbotWindow = () => {
             body: JSON.stringify({
                 model: "gpt-3.5-turbo",
                 messages: [
-                    { role: "system", content: "You are a helpful AI assistant that can chat with users and analyze `.ics` schedule files, please do not repeat the calendar containt, do the suggestion,if there is any free time in a day, help user to manage some relax event resonable, after analysis do the normal chat, if user ask something else expect calendar, then reply in the normal tone. Use Markdown formatting for better readability, Bold font can be used, but do not use headings.." },
+                    { role: "system", content: "You are a helpful AI assistant that can chat with users and analyze `.ics` schedule files, do the suggestion on arrange the events in the schedule, if there is any free time in a day, help user to manage some relax event resonable, after analysis do the normal chat, if user ask something else expect calendar, then reply in the normal tone. Use Markdown formatting for better readability, Bold font can be used, but do not use headings.." },
                     { role: "user", content: message }
                 ],
             }),
