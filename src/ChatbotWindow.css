@@ -1,0 +1,130 @@
+.chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+  
+  .chatbot-toggle {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+  }
+  
+
+  .chatbot-header {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .chatbot-header button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  
+  .chatbot-window {
+    width:600px;
+    height:900px;
+    display: flex;
+    flex-direction: column;
+    position: fixed; /* ✅ 确保聊天窗口固定 */
+    bottom: 10px; /* ✅ 靠近页面底部 */
+    right: 10px;
+    width: 350px;
+    max-height: 500px; /* ✅ 限制最大高度，防止溢出 */
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ✅ 让对话内容可滚动 */
+.chatbot-messages {
+    flex: 1;
+    overflow-y: auto;  /* ✅ 让消息滚动 */
+    max-height: 400px;  /* ✅ 限制消息区域大小 */
+    padding: 10px;
+}
+
+/* ✅ 确保输入框固定 */
+.chatbot-input {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    background: white;
+}
+
+/* ✅ 让输入框占满空间 */
+.chatbot-input input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* ✅ 调整发送按钮 */
+.chatbot-input button {
+    margin-left: 5px;
+    padding: 8px 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+    /* 让每条消息独立显示，不使用气泡 */
+    .message {
+        width: 100%;
+        padding: 10px 0;
+        border-bottom: 1px solid #ccc;  /* ✅ 添加分割线 */
+        text-align: left;
+    }
+
+    /* 让 AI 消息更易读 */
+    .message.bot {
+        background-color: transparent;  /* ✅ 去除气泡背景 */
+        color: #333;
+        font-size: 16px;
+        padding: 10px 0;
+    }
+
+    /* 让用户消息格式化 */
+    .message.user {
+        background-color: transparent;
+        color: #007bff;
+        font-weight: bold;
+    }
+
+    /* 确保 Markdown 内容格式化 */
+    .markdown-content {
+        text-align: left;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    /* 让 Markdown 列表对齐 */
+    .markdown-content ul {
+        padding-left: 20px;
+    }
+
+    .markdown-content li {
+        list-style-type: disc;
+        margin-left: 15px;
+    }
+
+

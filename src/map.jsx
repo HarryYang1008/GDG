@@ -1,5 +1,9 @@
 import React, { Component } from "react";
 import "./style.css";
+import ChatbotWindow from "./ChatbotWindow"; // 引入 Chatbot 组件
+
+
+
 
 class MapComponent extends Component {
   constructor(props) {
@@ -149,6 +153,7 @@ class MapComponent extends Component {
 
           {/* Calendar Days */}
           <div className="calendar-grid">{this.renderDays()}</div>
+          <ChatbotWindow />
         </main>
 
         
