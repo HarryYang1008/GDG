@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import "./style.css";
 import ChatbotWindow from "./ChatbotWindow"; // 引入 Chatbot 组件
+import usericon from "./user_icon.png";
 
 
 
@@ -14,8 +15,22 @@ class MapComponent extends Component {
       showModal: false,
       events: {}, // 用于存储每个日期的事件
       eventType: "event",
+     
+        eventTitle: "",
+        eventDate: "",
+        eventTime: "",
+        eventLocation: "",
+        eventDescription: "",
+      
+      
     };
   }
+
+
+  handleChange = (e) => {
+    this.setState({ [e.target.name]: e.target.value });
+  };
+
 
   goToToday = () => {
     const today = new Date();
@@ -45,23 +60,52 @@ class MapComponent extends Component {
   };
 
   // Save event
-  saveEvent = (eventText) => {
-    const { selectedDate, events } = this.state;
-    const dateKey = selectedDate.toISOString().split("T")[0];
-    const updatedEvents = { ...events, [dateKey]: eventText };
-    this.setState({ events: updatedEvents, showModal: false });
+  saveEvent = () => {
+  const { selectedDate, events, eventTitle, eventDate, eventTime, eventLocation, eventDescription } = this.state;
+  if (!selectedDate || !eventTitle || !eventDate || !eventTime) {
+    alert("Please fill in the required fields.");
+    return;
+  }
+
+  const dateKey = selectedDate.toISOString().split("T")[0];
+
+  const newEvent = {
+    title: eventTitle,
+    date: eventDate,
+    time: eventTime,
+    location: eventLocation,
+    description: eventDescription
   };
+
+  const updatedEvents = {
+    ...events,
+    [dateKey]: [...(events[dateKey] || []), newEvent] // 允许多个事件
+  };
+
+  this.setState({ 
+    events: updatedEvents, 
+    showModal: false,
+    eventTitle: "",
+    eventDate: "",
+    eventTime: "",
+    eventLocation: "",
+    eventDescription: ""
+  });
+};
+
+  
 
   // Render days in the calendar
   renderDays = () => {
-    const { currentDate } = this.state;
-    const today = new Date(); // 获取今天的日期
+    const { currentDate, events } = this.state;
+    const today = new Date();
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     const daysInMonth = endOfMonth.getDate();
     const startDayOfWeek = startOfMonth.getDay();
   
     const days = [];
+  
     // 填充空白占位符，确保日期与星期对齐
     for (let i = 0; i < startDayOfWeek; i++) {
       days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
@@ -73,20 +117,42 @@ class MapComponent extends Component {
       const isToday =
         date.getDate() === today.getDate() &&
         date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear(); // 判断是否为今天
+        date.getFullYear() === today.getFullYear();
+  
+      const dateKey = date.toISOString().split("T")[0];
+      const eventList = events[dateKey] || []; // 获取当天的事件
+  
       days.push(
         <div
           key={i}
-          className={`calendar-day ${isToday ? "today" : ""}`}
+          className={`calendar-day card ${isToday ? "today" : ""}`}
           onClick={() => this.selectDate(date)}
         >
-          <span>{i}</span>
+          <div className="date-header">
+            <span className="date-number">{i}</span>
+            {isToday && <span className="today-label">Today</span>}
+          </div>
+  
+          {/* 事件列表 */}
+          <div className="events-container">
+            {eventList.length > 0 ? (
+              eventList.map((event, index) => (
+                <div key={index} className="event">
+                  <div className="event-time">🕒 {event.time} {event.title}</div>
+                </div>
+              ))
+            ) : (
+              <div className="no-events">No events</div>
+            )}
+          </div>
         </div>
       );
     }
   
     return days;
   };
+  
+
 
   render() {
     const { currentDate, selectedDate, showModal, events } = this.state;
@@ -98,19 +164,17 @@ class MapComponent extends Component {
       <div className="app-container">
         {/* Banner */}
         <header className="banner">
-          <h1>Day-Manager</h1>
+          <div className="banner-left">
+            <h1>Day-Manager</h1>
+          </div>
+          <div className="banner-right">
+            <button className="user-icon" onClick={() => alert("User menu clicked!")}>
+              <img src={usericon} alt="User Icon" />
+            </button>
+          </div>
         </header>
 
-        {/* Sidebar */}
-        <aside className="sidebar">
-          <ul>
-            <li>My Calendars</li>
-            <li>Tasks</li>
-            <li>Events</li>
-            <li>Holidays</li>
-          </ul>
-        </aside>
-
+      
         {/* Main Calendar */}
         <main className="calendar-container">
         <div className="calendar-header">
@@ -134,9 +198,6 @@ class MapComponent extends Component {
 
           {/* Additional Buttons */}
           <div className="header-actions">
-            <button className="view-button">Month</button>
-            <button className="view-button">Week</button>
-            <button className="view-button">Day</button>
             <button className="settings-button">⚙️</button>
           </div>
         </div>
@@ -158,71 +219,82 @@ class MapComponent extends Component {
 
         
         {/* Modal */}
-        {showModal && (
-          <div className="modal">
-            <div className="modal-content">
-              {/* Close Button */}
-              <button className="close-button" onClick={this.closeModal}>
-                ×
-              </button>
-              
-              {/* Title */}
-              <h3>Add title and time</h3>
+        {/* Modal */}
+{showModal && (
+  <div className="modal">
+    <div className="modal-content">
+      {/* Close Button */}
+      <button className="close-button" onClick={this.closeModal}>×</button>
 
-              {/* Event/Task Toggle */}
-              <div className="toggle-options">
-                <button
-                  className={`toggle-button ${this.state.eventType === "event" ? "active" : ""}`}
-                  onClick={() => this.setState({ eventType: "event" })}
-                >
-                  Event
-                </button>
-                <button
-                  className={`toggle-button ${this.state.eventType === "task" ? "active" : ""}`}
-                  onClick={() => this.setState({ eventType: "task" })}
-                >
-                  Task
-                </button>
-              </div>
+      {/* Title */}
+      <h3>Add New Event</h3>
 
-              {/* Time Input */}
-              <div className="modal-row">
-                <label>Date</label>
-                <input
-                  type="date"
-                  defaultValue={selectedDate?.toISOString().split("T")[0] || ""}
-                />
-                <button className="add-time-button">Add time</button>
-              </div>
+      {/* Event Title */}
+      <div className="modal-row">
+        <label>Title *</label>
+        <input
+          type="text"
+          name="eventTitle"
+          value={this.state.eventTitle}
+          onChange={this.handleChange}
+          placeholder="Enter event title"
+          required
+        />
+      </div>
 
-              {/* Additional Inputs */}
-              <div className="modal-row">
-                <label>Add guests</label>
-                <input type="text" placeholder="Enter email addresses" />
-              </div>
+      {/* Date Input */}
+      <div className="modal-row">
+        <label>Date *</label>
+        <input
+          type="date"
+          name="eventDate"
+          value={this.state.eventDate}
+          onChange={this.handleChange}
+          required
+        />
+      </div>
 
-              <div className="modal-row">
-                <label>Add Google Meet video conferencing</label>
-                <button className="add-meeting-button">Add</button>
-              </div>
+      {/* Time Input */}
+      <div className="modal-row">
+        <label>Time *</label>
+        <input
+          type="time"
+          name="eventTime"
+          value={this.state.eventTime}
+          onChange={this.handleChange}
+          required
+        />
+      </div>
 
-              <div className="modal-row">
-                <label>Add location</label>
-                <input type="text" placeholder="Enter location" />
-              </div>
+      {/* Location Input */}
+      <div className="modal-row">
+        <label>Location</label>
+        <input
+          type="text"
+          name="eventLocation"
+          value={this.state.eventLocation}
+          onChange={this.handleChange}
+          placeholder="Enter location (optional)"
+        />
+      </div>
 
-              <div className="modal-row">
-                <label>Add description</label>
-                <textarea placeholder="Add description or a Google Drive attachment"></textarea>
-              </div>
+      {/* Description Input */}
+      <div className="modal-row">
+        <label>Description</label>
+        <textarea
+          name="eventDescription"
+          value={this.state.eventDescription}
+          onChange={this.handleChange}
+          placeholder="Add description or a Google Drive attachment"
+        />
+      </div>
 
-              {/* Save Button */}
-              <button className="save-button" onClick={() => this.saveEvent()}>
-                Save
-              </button>
-            </div>
-          </div>
-        )}
+      {/* Save Button */}
+      <button className="save-button" onClick={this.saveEvent}>Save</button>
+    </div>
+  </div>
+)}
+
 
 
       </div>
