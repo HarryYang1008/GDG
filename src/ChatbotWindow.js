@@ -78,7 +78,7 @@ const ChatbotWindow = () => {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${API_KEY}`, // 确保替换 API Key
+                "Authorization": `Bearer ${API_KEY}`,
             },
             body: JSON.stringify({
                 model: "gpt-3.5-turbo",

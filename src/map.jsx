@@ -27,9 +27,10 @@ class MapComponent extends Component {
   }
 
 
-  handleChange = (e) => {
-    this.setState({ [e.target.name]: e.target.value });
+  handleChange = (event) => {
+    this.setState({ [event.target.name]: event.target.value });
   };
+  
 
 
   goToToday = () => {
@@ -51,7 +52,11 @@ class MapComponent extends Component {
 
   // Select a date and open modal
   selectDate = (date) => {
-    this.setState({ selectedDate: date, showModal: true });
+    this.setState({ 
+      selectedDate: date, 
+      showModal: true, 
+      eventDate: date.toISOString().split("T")[0] // 将日期格式化为 YYYY-MM-DD
+    });
   };
 
   // Close modal
@@ -248,7 +253,7 @@ class MapComponent extends Component {
         <input
           type="date"
           name="eventDate"
-          value={this.state.eventDate}
+          value={this.state.eventDate} // 绑定状态
           onChange={this.handleChange}
           required
         />
