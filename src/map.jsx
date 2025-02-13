@@ -138,7 +138,7 @@ class MapComponent extends Component {
             {eventList.length > 0 ? (
               eventList.map((event, index) => (
                 <div key={index} className="event">
-                  <div className="event-time">🕒 {event.time} {event.title}</div>
+                  <div className="event-time">🕒 {event.time} -- {event.title}</div>
                 </div>
               ))
             ) : (
