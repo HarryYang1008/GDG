@@ -138,7 +138,35 @@ class MapComponent extends Component {
     eventLocation: "",
     eventDescription: ""
   });
+  };
+  
+
+  updateCalendar = (newEventsArray) => {
+    this.setState((prevState) => {
+        const updatedEvents = { ...prevState.events };
+
+        newEventsArray.forEach((event) => {
+            const dateKey = event.date;
+            updatedEvents[dateKey] = [];
+            updatedEvents[dateKey].push(event);
+        });
+
+        return { events: updatedEvents };
+    }, () => {
+        console.log("✅ Calendar successfully updated:", this.state.events);
+        this.forceUpdate();
+    });
 };
+
+
+
+
+
+
+  
+
+
+  
 parseICS = async (icsData) => {
     try {
       const events = [];
@@ -248,7 +276,8 @@ END:VEVENT`;
 
 
 renderDays = () => {
-  const { currentDate, weeklyStartDate, events, viewMode } = this.state;
+  const {currentDate,weeklyStartDate,events,viewMode} = this.state;
+  console.log("🔄 Rendering calendar with events:", events); // **调试：确保数据被读取**
   const today = new Date();
   let days = [];
 
@@ -471,7 +500,8 @@ renderDays = () => {
           {/* 根据视图模式选择渲染内容 */}
           <div className="calendar-grid">{this.renderDays()}</div>
 
-          <ChatbotWindow events={this.state.events} />
+          <ChatbotWindow events={this.state.events} updateCalendar={this.updateCalendar} />
+
           <button className="upload-container">
               <label htmlFor="ics-upload" className="upload-label">
                 📂 Upload `.ics` file

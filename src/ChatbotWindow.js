@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 
 const API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
 
-const ChatbotWindow = ({ events }) => {
+const ChatbotWindow = ({ events, updateCalendar }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { text: "👋 Hello! You can upload a `.ics` file, fetch your calendar, or just chat with me.", sender: "bot" }
@@ -25,46 +25,98 @@ const ChatbotWindow = ({ events }) => {
 
   // **发送请求到 OpenAI API**
 
+
+
+
+  const parseICSAndUpdateCalendar = (icsData) => {
+    try {
+        const events = [];
+        const lines = icsData.split("\n");
+        let currentEvent = {};
+
+        for (let line of lines) {
+            line = line.trim();
+
+            if (line.startsWith("BEGIN:VEVENT")) {
+                currentEvent = {};
+            } else if (line.startsWith("SUMMARY:")) {
+                currentEvent.title = line.replace("SUMMARY:", "").trim();
+            } else if (line.startsWith("DTSTART:")) {
+                const dateRaw = line.replace("DTSTART:", "").trim();
+                currentEvent.date = `${dateRaw.substring(0, 4)}-${dateRaw.substring(4, 6)}-${dateRaw.substring(6, 8)}`;
+                currentEvent.time = `${dateRaw.substring(9, 11)}:${dateRaw.substring(11, 13)}`;
+            } else if (line.startsWith("DTEND:")) {
+                currentEvent.endTime = line.replace("DTEND:", "").trim();
+            } else if (line.startsWith("LOCATION:")) {
+                currentEvent.location = line.replace("LOCATION:", "").trim();
+            } else if (line.startsWith("DESCRIPTION:")) {
+                currentEvent.description = line.replace("DESCRIPTION:", "").trim();
+            } else if (line.startsWith("END:VEVENT")) {
+                events.push(currentEvent);
+            }
+        }
+
+        if (events.length === 0) {
+            alert("📭 No valid events found in the .ics file.");
+            return;
+        }
+
+        console.log("🚀 Calling updateCalendar with:", events);
+        updateCalendar(events); // **✅ 传入数组**
+        alert("✅ AI-optimized schedule updated!");
+    } catch (error) {
+        console.error("❌ Failed to parse .ics file:", error);
+    }
+};
+
+
+  
+  
   const sendToOpenAI = async (message) => {
     try {
-      const updatedMessages = [
-        { role: "system", content: "You are a helpful AI assistant that can chat with users and analyze `.ics` schedule files. You read the `.ics` file that uploaded by user, and rearrange them by optimize the time managment, and then MUST return the new `.ics` file back to the user. you also do the analysis on the schedule and give some suggestion. if user send a normal chat, you can also do the normal chat. If you return `.ics` formatted data, make sure it's a complete and valid calendar file." },
-        ...messages.map((msg) => ({
-          role: msg.sender === "bot" ? "assistant" : "user",
-          content: msg.text
-        })),
-        { role: "user", content: message }
-      ];
-  
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: updatedMessages, // 👈 发送完整的对话记录
-        }),
-      });
-  
-      const data = await response.json();
-      if (data.choices && data.choices.length > 0) {
-        let formattedResponse = data.choices[0].message.content;
-  
-        // **检测 `.ics` 数据**
-        if (formattedResponse.includes("BEGIN:VCALENDAR")) {
-          alert("📅 Detected ICS data! Updating your calendar...");
-          parseICS(formattedResponse);
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`,
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: [
+                  { role: "system", content: "You are a helpful AI assistant that can chat with users and analyze `.ics` schedule files. You read the `.ics` file that uploaded by user, and rearrange them by optimize the time managment, and then MUST return the new in text `.ics` back to the user, you can add new event to the schedule BASE ON THE ORIGINAL VERSION, MERGE THE SIMILAR EVENT IF POSSIBLE. you also do the analysis on the schedule and give some suggestion. if user send a normal chat, you can also do the normal chat. If you return `.ics` formatted data, make sure it's a complete and valid calendar file." },
+                  ...messages.map((msg) => ({
+                    role: msg.sender === "bot" ? "assistant" : "user",
+                    content: msg.text
+                  })),
+                  { role: "user", content: message }
+                ],
+            }),
+        });
+
+        const data = await response.json();
+        if (data.choices && data.choices.length > 0) {
+            let formattedResponse = data.choices[0].message.content;
+
+            // **📌 1. 解析 `.ics` 格式的内容**
+            const icsMatch = formattedResponse.match(/BEGIN:VCALENDAR[\s\S]*?END:VCALENDAR/);
+            
+            if (icsMatch) {
+                const icsData = icsMatch[0];
+                alert("📅 Detected ICS data! Updating your calendar...");
+
+                // **📌 2. 解析 .ics 并更新日历**
+                parseICSAndUpdateCalendar(icsData);
+            }
+
+            setMessages((prevMessages) => [...prevMessages, { text: formattedResponse, sender: "bot" }]);
         }
-  
-        setMessages((prevMessages) => [...prevMessages, { text: formattedResponse, sender: "bot" }]);
-      }
     } catch (error) {
-      console.error("❌ OpenAI API request failed:", error);
-      setMessages((prevMessages) => [...prevMessages, { text: "❌ Failed to connect to AI. Please try again later!", sender: "bot" }]);
+        console.error("❌ OpenAI API request failed:", error);
+        setMessages((prevMessages) => [...prevMessages, { text: "❌ Failed to connect to AI. Please try again later!", sender: "bot" }]);
     }
-  };
+};
+
+ 
   
   
 
