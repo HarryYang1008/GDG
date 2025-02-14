@@ -299,3 +299,133 @@ body {
 .save-button:hover {
   background: #0b63ce;
 }
+
+
+.upload-container{
+  margin-top:10px;
+  height:40px;
+  width:200px;
+  color:white;
+  background-color: #0b63ce;
+  border:#155ab2;
+}
+
+
+
+/* 切换视图按钮 */
+.view-mode-toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.view-mode-button {
+  padding: 8px 15px;
+  margin: 0 5px;
+  border: none;
+  cursor: pointer;
+  background: #444;
+  color: white;
+  border-radius: 4px;
+}
+
+.view-mode-button.active {
+  background: #1a73e8;
+}
+
+/* 周视图布局 */
+.calendar-weekly {
+  display: flex;
+  justify-content: space-around;
+}
+.week-view {
+  display: flex; /* 让子元素横向排列 */
+  justify-content: space-around; /* 均匀分布 */
+  align-items: center;
+  gap: 10px; /* 控制每个日期卡片的间距 */
+  padding: 10px;
+  overflow-x: auto; /* 允许横向滚动 */
+}
+
+.week-day-card {
+  height:600px;
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 100px; /* 让每个卡片有相同的宽度 */
+  text-align: center;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  transition: 0.3s;
+}
+
+.week-day-card:hover {
+  background: #f0f0f0;
+}
+
+/* 让当天的日期高亮 */
+.week-date.today {
+  color: red;
+  font-weight: bold;
+}
+.week-day-card {
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 120px; /* 让每个卡片有相同的宽度 */
+  text-align: center;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  transition: 0.3s;
+  display: flex;
+  flex-direction: column; /* 让事件列表垂直排列 */
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.week-day-card:hover {
+  background: #f0f0f0;
+}
+
+/* 视图模式切换容器 */
+.view-mode-toggle {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0;
+  background: #ddd;
+  border-radius: 8px;
+  padding: 5px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 视图切换按钮 */
+.view-mode-toggle button {
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  background: none;
+  transition: all 0.3s ease-in-out;
+  border-radius: 6px;
+}
+
+/* 选中的视图模式按钮 */
+.view-mode-toggle button.active {
+  background: #1a73e8;
+  color: white;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+/* 悬停效果 */
+.view-mode-toggle button:hover {
+  background: #0b5ed7;
+  color: white;
+}
+
+/* 按钮之间的间隔 */
+.view-mode-toggle button:not(:last-child) {
+  margin-right: 5px;
+}

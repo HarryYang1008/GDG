@@ -13,16 +13,56 @@ class MapComponent extends Component {
       currentDate: new Date(),
       selectedDate: null,
       showModal: false,
-      events: {}, // 存储事件
+      events: {}, 
       eventType: "event",
       eventTitle: "",
       eventDate: "",
       eventTime: "",
       eventLocation: "",
       eventDescription: "",
+      viewMode: "monthly", // 👈 新增一个 viewMode 来控制当前是 Monthly 还是 Weekly
+      currentDate: new Date(),
+      weeklyStartDate: this.getStartOfWeek(new Date()), // 获取当前周的起始日期
+      
     };
+    
   }
+  
 
+  changeWeek = (direction) => {
+    this.setState((prevState) => ({
+      weeklyStartDate: new Date(prevState.weeklyStartDate.setDate(prevState.weeklyStartDate.getDate() + direction * 7))
+    }));
+  };
+  
+  
+
+  setViewMode = (mode) => {
+    if (mode === "weekly") {
+      this.setState({ 
+        viewMode: "weekly",
+        weeklyStartDate: this.getStartOfWeek(this.state.currentDate) // 计算当前周起始日期
+      });
+    } else {
+      this.setState({ viewMode: "monthly" });
+    }
+  };
+  
+
+  
+
+  getStartOfWeek = (date) => {
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(date.getDate() - date.getDay()); // 从周日开始
+    return startOfWeek;
+  };
+  
+
+  
+  toggleViewMode = (mode) => {
+    this.setState({ viewMode: mode });
+  };
+  
 
   handleChange = (event) => {
     this.setState({ [event.target.name]: event.target.value });
@@ -32,8 +72,13 @@ class MapComponent extends Component {
 
   goToToday = () => {
     const today = new Date();
-    this.setState({ currentDate: today, selectedDate: today });
+    this.setState({
+      currentDate: today,
+      selectedDate: today,
+      weeklyStartDate: this.getStartOfWeek(today) // 👈 在 Weekly 视图下更新本周起始日期
+    });
   };
+  
   
 
   // Change the month
@@ -202,33 +247,30 @@ END:VEVENT`;
 };
 
 
-  // Render days in the calendar
-  renderDays = () => {
-    const { currentDate, events } = this.state;
-    const today = new Date();
+renderDays = () => {
+  const { currentDate, weeklyStartDate, events, viewMode } = this.state;
+  const today = new Date();
+  let days = [];
+
+  if (viewMode === "monthly") {
+    // **📆 Monthly View**
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     const daysInMonth = endOfMonth.getDate();
     const startDayOfWeek = startOfMonth.getDay();
-  
-    const days = [];
-  
-    // 填充空白占位符，确保日期与星期对齐
+
+    // 填充空白占位符
     for (let i = 0; i < startDayOfWeek; i++) {
       days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
     }
-  
+
     // 填充当前月份的日期
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
-      const isToday =
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear();
-  
       const dateKey = date.toISOString().split("T")[0];
-      const eventList = events[dateKey] || []; // 获取当天的事件
-  
+      const isToday = date.toDateString() === today.toDateString();
+      const eventList = events[dateKey] || [];
+
       days.push(
         <div
           key={i}
@@ -239,8 +281,8 @@ END:VEVENT`;
             <span className="date-number">{i}</span>
             {isToday && <span className="today-label">Today</span>}
           </div>
-  
-          {/* 事件列表 */}
+
+          {/* 事件展示 */}
           <div className="events-container">
             {eventList.length > 0 ? (
               eventList.map((event, index) => (
@@ -255,10 +297,95 @@ END:VEVENT`;
         </div>
       );
     }
+  } else {
+    // **📅 Weekly View**
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weeklyStartDate);
+      date.setDate(weeklyStartDate.getDate() + i);
+      const dateKey = date.toISOString().split("T")[0];
+      const isToday = date.toDateString() === today.toDateString();
+      const eventList = events[dateKey] || [];
+
+      days.push(
+        <div
+          key={i}
+          className={`week-day-card ${isToday ? "today" : ""}`}
+          onClick={() => this.selectDate(date)}
+        >
+          <div className="week-date">
+            <span className="week-day">{date.toLocaleDateString("en-US", { weekday: "short" })}</span>
+            <span className={`week-number ${isToday ? "highlight" : ""}`}>{date.getDate()}</span>
+          </div>
+
+          {/* 事件展示 */}
+          <div className="events-container">
+            {eventList.length > 0 ? (
+              eventList.map((event, index) => (
+                <div key={index} className="event">
+                  🕒 {event.time} - {event.title}
+                </div>
+              ))
+            ) : (
+              <div className="no-events">No events</div>
+            )}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  return days;
+};
+
+
   
-    return days;
+
+  renderWeekView = () => {
+    const { weeklyStartDate, events } = this.state;
+    const today = new Date();
+  
+    // 创建数组存放这周的 7 天
+    const weekDays = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weeklyStartDate);
+      date.setDate(weeklyStartDate.getDate() + i);
+  
+      const dateKey = date.toISOString().split("T")[0];
+      const eventList = events[dateKey] || [];
+  
+      const isToday =
+        date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear();
+  
+      weekDays.push(
+        <div key={i} className={`week-day-card ${isToday ? "today" : ""}`} onClick={() => this.selectDate(date)}>
+          <div className="week-date">
+            <span className="week-day">{date.toLocaleDateString("en-US", { weekday: "short" })}</span>
+            <span className={`week-number ${isToday ? "highlight" : ""}`}>{date.getDate()}</span>
+          </div>
+  
+          {/* 事件展示 */}
+          <div className="week-events-container">
+            {eventList.length > 0 ? (
+              eventList.map((event, index) => (
+                <div key={index} className="week-event">
+                  🕒 {event.time} - {event.title}
+                </div>
+              ))
+            ) : (
+              <div className="no-events">No events</div>
+            )}
+          </div>
+        </div>
+      );
+    }
+  
+    return <div className="week-view">{weekDays}</div>;
   };
   
+  
+
 
 
   render() {
@@ -290,31 +417,27 @@ END:VEVENT`;
 
             Today
             </button>
-            <div className="upload-container">
-              <label htmlFor="ics-upload" className="upload-label">
-                📂 Upload `.ics` file
-              </label>
-              <input
-                id="ics-upload"
-                type="file"
-                accept=".ics"
-                onChange={this.handleICSUpload}
-                style={{ display: "none" }}
-              />
-            </div>
+            
 
-          {/* Month and Year Display */}
-          <div className="month-year-display">
-            <button className="arrow-button" onClick={() => this.changeMonth(-1)}>
-              {"<"}
-            </button>
-            <h2>
-              {currentMonth} {currentYear}
-            </h2>
-            <button className="arrow-button" onClick={() => this.changeMonth(1)}>
-              {">"}
-            </button>
-          </div>
+         {/* Month and Year Display */}
+        <div className="month-year-display">
+          {this.state.viewMode === "monthly" ? (
+            <>
+              <button className="arrow-button" onClick={() => this.changeMonth(-1)}>{"<"}</button>
+              <h2>
+                {currentMonth} {currentYear}
+              </h2>
+              <button className="arrow-button" onClick={() => this.changeMonth(1)}>{">"}</button>
+            </>
+          ) : (
+            <>
+              <button className="arrow-button" onClick={() => this.changeWeek(-1)}>{"<"}</button>
+              <h2>Week of {this.state.weeklyStartDate.toDateString()}</h2>
+              <button className="arrow-button" onClick={() => this.changeWeek(1)}>{">"}</button>
+            </>
+          )}
+        </div>
+
 
           {/* Additional Buttons */}
           <div className="header-actions">
@@ -333,13 +456,38 @@ END:VEVENT`;
           </div>
 
           {/* Calendar Days */}
-          <div className="calendar-grid">{this.renderDays()}</div>
-          <ChatbotWindow events={this.state.events} />
+          {/* 视图模式切换按钮 */}
+          <div className="view-mode-toggle">
+            <button className={this.state.viewMode === "monthly" ? "active" : ""} onClick={() => this.setViewMode("monthly")}>
+              Monthly
+            </button>
+            <button className={this.state.viewMode === "weekly" ? "active" : ""} onClick={() => this.setViewMode("weekly")}>
+              Weekly
+            </button>
+          </div>
 
+
+
+          {/* 根据视图模式选择渲染内容 */}
+          <div className="calendar-grid">{this.renderDays()}</div>
+
+          <ChatbotWindow events={this.state.events} />
+          <button className="upload-container">
+              <label htmlFor="ics-upload" className="upload-label">
+                📂 Upload `.ics` file
+              </label>
+              <input
+                id="ics-upload"
+                type="file"
+                accept=".ics"
+                onChange={this.handleICSUpload}
+                style={{ display: "none" }}
+              />
+            </button>
         </main>
 
         
-        {/* Modal */}
+        
         {/* Modal */}
 {showModal && (
   <div className="modal">
