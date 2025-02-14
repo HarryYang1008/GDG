@@ -13,16 +13,13 @@ class MapComponent extends Component {
       currentDate: new Date(),
       selectedDate: null,
       showModal: false,
-      events: {}, // 用于存储每个日期的事件
+      events: {}, // 存储事件
       eventType: "event",
-     
-        eventTitle: "",
-        eventDate: "",
-        eventTime: "",
-        eventLocation: "",
-        eventDescription: "",
-      
-      
+      eventTitle: "",
+      eventDate: "",
+      eventTime: "",
+      eventLocation: "",
+      eventDescription: "",
     };
   }
 
@@ -97,8 +94,113 @@ class MapComponent extends Component {
     eventDescription: ""
   });
 };
+parseICS = async (icsData) => {
+    try {
+      const events = [];
+      const lines = icsData.split("\n");
+      let currentEvent = {};
 
+      for (let line of lines) {
+        line = line.trim();
+
+        if (line.startsWith("BEGIN:VEVENT")) {
+          currentEvent = {};
+        } else if (line.startsWith("SUMMARY:")) {
+          currentEvent.title = line.replace("SUMMARY:", "").trim();
+        } else if (line.startsWith("DTSTART:")) {
+          currentEvent.date = line.replace("DTSTART:", "").substring(0, 8); // 获取 YYYYMMDD
+          currentEvent.time = line.replace("DTSTART:", "").substring(9, 13); // 获取 HHMM
+        } else if (line.startsWith("DTEND:")) {
+          currentEvent.endTime = line.replace("DTEND:", "").substring(9, 13); // 获取 HHMM
+        } else if (line.startsWith("LOCATION:")) {
+          currentEvent.location = line.replace("LOCATION:", "").trim();
+        } else if (line.startsWith("DESCRIPTION:")) {
+          currentEvent.description = line.replace("DESCRIPTION:", "").trim();
+        } else if (line.startsWith("END:VEVENT")) {
+          events.push(currentEvent);
+        }
+      }
+
+      return events;
+    } catch (error) {
+      console.error("❌ Failed to parse .ics file:", error);
+      return [];
+    }
+  };
+handleICSUpload = async (event) => {
+  const uploadedFile = event.target.files[0];
+  if (!uploadedFile) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const icsData = e.target.result;
+    const parsedEvents = await this.parseICS(icsData);
+
+    if (parsedEvents.length === 0) {
+      alert("📭 No valid events found in the .ics file.");
+      return;
+    }
+
+    // **格式化解析的数据并合并到现有 events 状态**
+    const updatedEvents = { ...this.state.events };
+
+    parsedEvents.forEach((event) => {
+      const dateKey = `${event.date.substring(0, 4)}-${event.date.substring(4, 6)}-${event.date.substring(6, 8)}`;
+
+      if (!updatedEvents[dateKey]) {
+        updatedEvents[dateKey] = [];
+      }
+
+      updatedEvents[dateKey].push({
+        title: event.title || "Untitled Event",
+        date: dateKey,
+        time: event.time ? `${event.time.substring(0, 2)}:${event.time.substring(2, 4)}` : "00:00",
+        location: event.location || "No location",
+        description: event.description || "",
+      });
+    });
+
+    // **更新状态**
+    this.setState({ events: updatedEvents });
+    alert("✅ Calendar updated successfully!");
+  };
+
+  reader.readAsText(uploadedFile);
+  };
   
+
+generateICS = () => {
+  const { events } = this.state;
+  let icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Day Manager//EN\n`;
+
+  Object.keys(events).forEach((dateKey) => {
+    events[dateKey].forEach((event) => {
+      const startDateTime = `${event.date.replace(/-/g, "")}T${event.time.replace(":", "")}00Z`; // 格式 YYYYMMDDTHHMMSSZ
+      const endDateTime = `${event.date.replace(/-/g, "")}T${parseInt(event.time.split(":")[0]) + 1}${event.time.split(":")[1]}00Z`; // 事件时长默认 1 小时
+
+      icsContent += `
+BEGIN:VEVENT
+SUMMARY:${event.title}
+DTSTART:${startDateTime}
+DTEND:${endDateTime}
+LOCATION:${event.location || "No location"}
+DESCRIPTION:${event.description || ""}
+END:VEVENT`;
+    });
+  });
+
+  icsContent += `\nEND:VCALENDAR`;
+
+  // 创建 Blob 并下载
+  const blob = new Blob([icsContent], { type: "text/calendar" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "calendar.ics";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 
   // Render days in the calendar
   renderDays = () => {
@@ -184,9 +286,22 @@ class MapComponent extends Component {
         <main className="calendar-container">
         <div className="calendar-header">
           {/* Today Button */}
-          <button className="today-button" onClick={() => this.goToToday()}>
+            <button className="today-button" onClick={() => this.goToToday()}>
+
             Today
-          </button>
+            </button>
+            <div className="upload-container">
+              <label htmlFor="ics-upload" className="upload-label">
+                📂 Upload `.ics` file
+              </label>
+              <input
+                id="ics-upload"
+                type="file"
+                accept=".ics"
+                onChange={this.handleICSUpload}
+                style={{ display: "none" }}
+              />
+            </div>
 
           {/* Month and Year Display */}
           <div className="month-year-display">
@@ -219,7 +334,8 @@ class MapComponent extends Component {
 
           {/* Calendar Days */}
           <div className="calendar-grid">{this.renderDays()}</div>
-          <ChatbotWindow />
+          <ChatbotWindow events={this.state.events} />
+
         </main>
 
         

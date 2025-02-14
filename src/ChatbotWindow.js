@@ -1,17 +1,69 @@
 import React, { useState } from "react";
 import "./ChatbotWindow.css";
 import ReactMarkdown from "react-markdown";
+
 const API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
 
-const ChatbotWindow = () => {
+const ChatbotWindow = ({ events }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { text: "👋 Hello! You can upload a `.ics` file or just chat with me.", sender: "bot" }
+    { text: "👋 Hello! You can upload a `.ics` file, fetch your calendar, or just chat with me.", sender: "bot" }
   ]);
   const [input, setInput] = useState("");
   const [file, setFile] = useState(null);
 
-  // 解析 .ics 日历文件
+  // **处理用户文本输入**
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
+    
+    setMessages((prevMessages) => [...prevMessages, { text: input, sender: "user" }]);
+    const userInput = input;
+    setInput("");
+
+    await sendToOpenAI(userInput);
+  };
+
+  // **发送请求到 OpenAI API**
+
+  const sendToOpenAI = async (message) => {
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "system", content: "You are a helpful AI assistant that can chat with users and analyze `.ics` schedule files. You read the `.ics` file that uploaded by user, and rearrange them by optimize the time managment, and then MUST return the new `.ics` file back to the user. you also do the analysis on the schedule and give some suggestion. if user send a normal chat, you can also do the normal chat. If you return `.ics` formatted data, make sure it's a complete and valid calendar file." },
+            { role: "user", content: message }
+          ],
+        }),
+      });
+  
+      const data = await response.json();
+      if (data.choices && data.choices.length > 0) {
+        let formattedResponse = data.choices[0].message.content;
+  
+        // **检测 `.ics` 数据**
+        if (formattedResponse.includes("BEGIN:VCALENDAR")) {
+          alert("📅 Detected ICS data! Updating your calendar...");
+          
+          // 解析并更新日历
+          parseICS(formattedResponse);
+        }
+  
+        setMessages((prevMessages) => [...prevMessages, { text: formattedResponse, sender: "bot" }]);
+      }
+    } catch (error) {
+      console.error("❌ OpenAI API request failed:", error);
+      setMessages((prevMessages) => [...prevMessages, { text: "❌ Failed to connect to AI. Please try again later!", sender: "bot" }]);
+    }
+  };
+  
+
+  // **解析 .ics 文件**
   const parseICS = async (icsData) => {
     try {
       const events = [];
@@ -19,6 +71,8 @@ const ChatbotWindow = () => {
       let currentEvent = {};
 
       for (let line of lines) {
+        line = line.trim(); 
+
         if (line.startsWith("BEGIN:VEVENT")) {
           currentEvent = {};
         } else if (line.startsWith("SUMMARY:")) {
@@ -43,11 +97,10 @@ const ChatbotWindow = () => {
     }
   };
 
-  // 处理 .ics 文件上传
-  const handleFileUpload = async (event) => {
-    const uploadedFile = event.target.files[0];
-    if (!uploadedFile) return;
-    setFile(uploadedFile);
+  // **处理 .ics 文件上传**
+  const handleFileUpload = async (fileObj) => {
+    if (!fileObj) return;
+    setFile(fileObj);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -59,73 +112,61 @@ const ChatbotWindow = () => {
         return;
       }
 
-      // 整理事件
       const eventsSummary = events.map(e => `📅 ${e.summary} \n🕒 ${e.start} - ${e.end} \n📍 ${e.location || "No location"}`).join("\n\n");
 
       setMessages((prevMessages) => [...prevMessages, { text: "✅ Calendar parsing successful, analyzing schedule...", sender: "bot" }]);
 
-      // 发送到 OpenAI API 进行日程优化
       await sendToOpenAI(`The following is my schedule. Please analyze my busyness and provide optimization suggestions:\n${eventsSummary}`);
     };
 
-    reader.readAsText(uploadedFile);
+    reader.readAsText(fileObj);
   };
 
-  // 发送文本或 `.ics` 解析结果到 OpenAI API
-  const sendToOpenAI = async (message) => {
-    try {
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "gpt-3.5-turbo",
-                messages: [
-                    { role: "system", content: "You are a helpful AI assistant that can chat with users and analyze `.ics` schedule files, do the suggestion on arrange the events in the schedule, if there is any free time in a day, help user to manage some relax event resonable, after analysis do the normal chat, if user ask something else expect calendar, then reply in the normal tone. Use Markdown formatting for better readability, Bold font can be used, but do not use headings.." },
-                    { role: "user", content: message }
-                ],
-            }),
-        });
-
-        const data = await response.json();
-        if (data.choices && data.choices.length > 0) {
-            let formattedResponse = data.choices[0].message.content;
-
-            // ✅ 确保 Markdown 解析正确
-            formattedResponse = formattedResponse
-                .replace(/\d+\.\s/g, "\n\n🔹 ")  // 让 1. 2. 3. 自动换行
-                .replace(/\*\*(.*?)\*\*/g, "\n\n**$1**") // 确保标题加粗
-
-            setMessages((prevMessages) => [...prevMessages, { text: formattedResponse, sender: "bot" }]);
-        }
-    } catch (error) {
-        console.error("❌ OpenAI API request failed:", error);
-        setMessages((prevMessages) => [...prevMessages, { text: "❌ Failed to connect to AI. Please try again later!", sender: "bot" }]);
+  // **生成 .ics 文件并自动上传**
+  const fetchICSFromCalendar = () => {
+    if (!events || Object.keys(events).length === 0) {
+      alert("No events found in your calendar.");
+      return;
     }
-};
 
+    let icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Day Manager//EN\n`;
 
+    Object.keys(events).forEach((dateKey) => {
+      events[dateKey].forEach((event, index) => {
+        const startDateTime = `${event.date.replace(/-/g, "")}T${event.time.replace(":", "")}00Z`;
+        const endTimeHour = parseInt(event.time.split(":")[0]) + 1; 
+        const endTimeHourStr = endTimeHour.toString().padStart(2, '0');
+        const endDateTime = `${event.date.replace(/-/g, "")}T${endTimeHourStr}${event.time.split(":")[1]}00Z`;
 
-  // 处理用户文本输入
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
-    
-    // 先显示用户输入的消息
-    setMessages((prevMessages) => [...prevMessages, { text: input, sender: "user" }]);
-    const userInput = input;
-    setInput("");
+        const uid = `event-${dateKey}-${index}@daymanager.com`; 
 
-    // 发送到 OpenAI API 进行普通对话
-    await sendToOpenAI(userInput);
+        icsContent += `
+BEGIN:VEVENT
+UID:${uid}
+SUMMARY:${event.title}
+DTSTART:${startDateTime}
+DTEND:${endDateTime}
+LOCATION:${event.location || "No location"}
+DESCRIPTION:${event.description || ""}
+SEQUENCE:0
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT`;
+      });
+    });
+
+    icsContent += `\nEND:VCALENDAR`;
+
+    // **转换为 File 并自动上传**
+    const blob = new Blob([icsContent], { type: "text/calendar" });
+    const file = new File([blob], "calendar.ics", { type: "text/calendar" });
+
+    handleFileUpload(file);
   };
 
   return (
     <div className="chatbot-container">
-      <button className="chatbot-toggle" onClick={() => setIsOpen(!isOpen)}>
-        💬
-      </button>
+      <button className="chatbot-toggle" onClick={() => setIsOpen(!isOpen)}>💬</button>
 
       {isOpen && (
         <div className="chatbot-window">
@@ -136,38 +177,18 @@ const ChatbotWindow = () => {
 
           <div className="chatbot-messages">
             {messages.map((msg, index) => (
-                <div key={index} className={`message ${msg.sender}`}>
-                    {msg.sender === "bot" ? (
-                        <ReactMarkdown className="markdown-content">{msg.text}</ReactMarkdown>
-                    ) : (
-                        <p>{msg.text}</p>
-                    )}
-                </div>
+              <div key={index} className={`message ${msg.sender}`}>
+                {msg.sender === "bot" ? <ReactMarkdown>{msg.text}</ReactMarkdown> : <p>{msg.text}</p>}
+              </div>
             ))}
-         </div>
+          </div>
 
-          {/* 文件上传按钮 */}
           <div className="chatbot-file-upload">
-            <label htmlFor="file-upload" className="file-upload-label">
-              📂 Upload `.ics` file
-            </label>
-            <input
-              id="file-upload"
-              type="file"
-              accept=".ics"
-              onChange={handleFileUpload}
-              style={{ display: "none" }}
-            />
+            <button className="fetch-button" onClick={fetchICSFromCalendar}>Analysis My calendar</button>
           </div>
 
           <div className="chatbot-input">
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            />
+            <input type="text" placeholder="Type a message..." value={input} onChange={(e) => setInput(e.target.value)} />
             <button onClick={handleSendMessage}>Send</button>
           </div>
         </div>
