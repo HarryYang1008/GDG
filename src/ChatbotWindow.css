@@ -132,6 +132,7 @@
 
 
     .fetch-button{
+        margin-bottom:5px;
         background-color: #5B7493;
         color: white;
         width: 150px;

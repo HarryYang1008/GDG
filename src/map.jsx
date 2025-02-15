@@ -393,7 +393,7 @@ renderDays = () => {
           key={i}
           className={`calendar-day card ${isToday ? "today" : ""} ${holiday ? "holiday" : ""}`}
           onClick={() => this.selectDate(date)}
-          style={holiday ? { backgroundColor: "#FFD700", fontWeight: "bold" } : {}}
+          style={holiday ? { backgroundColor: "rgba(255, 217, 0, 0.74)", fontWeight: "bold" } : {}}
         >
           <div className="date-header">
             <span className="date-number">{i}</span>
@@ -409,8 +409,8 @@ renderDays = () => {
                   key={index} 
                   className="event"
                   style={{ 
-                    backgroundColor: userColors[event.userId] || "#ddd", 
-                    color: "#fff" 
+                    backgroundColor: userColors[event.userId] || "rgb(50, 126, 31)", 
+                    color: "rgb(255, 255, 255)" 
                   }}
                   title={`Title: ${event.title}\nTime: ${event.time}\nUser: ${event.userId}`}
                 >
@@ -439,7 +439,7 @@ renderDays = () => {
           key={i}
           className={`week-day-card ${isToday ? "today" : ""} ${holiday ? "holiday" : ""}`}
           onClick={() => this.selectDate(date)}
-          style={holiday ? { backgroundColor: "#FFD700", fontWeight: "bold" } : {}}
+          style={holiday ? { backgroundColor: "rgba(255, 217, 0, 0.74)", fontWeight: "bold" } : {}}
         >
           <div className="week-date">
             <span className="week-day">{date.toLocaleDateString("en-US", { weekday: "short" })}</span>
@@ -558,6 +558,7 @@ renderDays = () => {
       
         {/* Main Calendar */}
         <main className="calendar-container">
+        
         <div className="calendar-header">
           {/* Today Button */}
             <button className="today-button" onClick={() => this.goToToday()}>
@@ -588,7 +589,7 @@ renderDays = () => {
 
           {/* Additional Buttons */}
           <div className="header-actions">
-            <button className="settings-button">⚙️</button>
+            <button className="settings-button"></button>
           </div>
         </div>
 

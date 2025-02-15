@@ -86,6 +86,9 @@ body {
 
 /* Calendar Header */
 .calendar-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000; /* 确保在其他元素上方 */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -94,6 +97,7 @@ body {
   color: white;
   border-bottom: 1px solid #444;
 }
+
 
 /* Today Button */
 .today-button {
@@ -112,6 +116,10 @@ body {
 
 /* Month and Year Display */
 .month-year-display {
+  position: sticky;
+  top: 0px;
+  z-index: 10001; /* 确保在其他元素上方 */
+  padding: 10px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -157,7 +165,7 @@ body {
 
 /* 日历卡片 */
 .calendar-day {
-  background: white;
+  background: rgba(214, 210, 202, 0.678);
   border-radius: 8px;
   padding: 8px;
   min-height: 120px;
@@ -170,7 +178,7 @@ body {
 }
 
 .calendar-day:hover {
-  background: #f0f0f0;
+  background: #ffffffc7;
 }
 
 .date-header {
@@ -183,7 +191,7 @@ body {
 .calendar-day.today {
   background-color: #8eadd2;
   color: black;
-  border: 2px solid #155ab2;
+  border: 2px solid #8eadd2;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
@@ -199,6 +207,7 @@ body {
   text-align: left;
   font-size: 12px;
   padding: 5px;
+  
 }
 
 .event {
@@ -209,11 +218,12 @@ body {
   font-size: 12px;
   text-align: left;
   color:white;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.8);
 }
 
 .no-events {
   font-size: 12px;
-  color: gray;
+  color: rgb(44, 44, 44);
   text-align: center;
 }
 
@@ -352,18 +362,7 @@ body {
   overflow-x: auto; /* 允许横向滚动 */
 }
 
-.week-day-card {
-  min-height: 600px; /* 设置最小高度为 600px */
-  max-height: none; /* 允许高度自动延长 */
-  background: white;
-  border-radius: 8px;
-  padding: 10px;
-  min-width: 100px; /* 让每个卡片有相同的宽度 */
-  text-align: center;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-  transition: 0.3s;
-  overflow: visible; /* 确保内容不会被裁剪 */
-}
+
 
 
 .week-day-card:hover {
@@ -376,7 +375,9 @@ body {
   font-weight: bold;
 }
 .week-day-card {
-  background: white;
+  min-height: 600px; /* 设置最小高度为 600px */
+  max-height: none; /* 允许高度自动延长 */
+  background: rgba(214, 210, 202, 0.678);
   border-radius: 8px;
   padding: 10px;
   min-width: 120px; /* 让每个卡片有相同的宽度 */
