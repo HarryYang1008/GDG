@@ -7,9 +7,14 @@
 
 body {
   font-family: Arial, sans-serif;
-  background-color: #a2a2a2;
+  background-image: url("./backgroud.jpg"); /* 替换为你的图片路径 */
+  background-size: cover;  /* 让图片自动填充整个屏幕，可能会被裁剪 */
+  background-position: center; /* 让图片居中，确保视觉效果良好 */
+  background-repeat: no-repeat; /* 防止图片重复 */
+  background-attachment: fixed; /* 让背景固定，不随页面滚动 */
   color: #333;
 }
+
 
 /* App Container - 让 Banner 固定，日历填充剩余页面 */
 .app-container {
@@ -92,7 +97,7 @@ body {
 
 /* Today Button */
 .today-button {
-  background-color: #1a73e8;
+  background-color: #5B7493;
   color: white;
   border: none;
   border-radius: 4px;
@@ -126,7 +131,7 @@ body {
 }
 
 .arrow-button:hover {
-  color: #1a73e8;
+  color: #5B7493;
 }
 
 /* ============================= */
@@ -176,14 +181,14 @@ body {
 
 /* 高亮当天日期 */
 .calendar-day.today {
-  background-color: #1a73e8;
-  color: white;
+  background-color: #8eadd2;
+  color: black;
   border: 2px solid #155ab2;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .calendar-day.today:hover {
-  background-color: #155ab2;
+  background-color:  #c2cedc;
 }
 
 /* ============================= */
@@ -266,7 +271,7 @@ body {
 
 .modal-row label {
   margin-bottom: 5px;
-  color: #9aa0a6;
+  color: #5B7493;
 }
 
 .modal-row input,
@@ -285,7 +290,7 @@ body {
 
 /* Save Button */
 .save-button {
-  background: #1a73e8;
+  background: #5B7493;
   color: white;
   border: none;
   padding: 12px 20px;
@@ -297,7 +302,7 @@ body {
 }
 
 .save-button:hover {
-  background: #0b63ce;
+  background: #5B7493;
 }
 
 
@@ -306,7 +311,7 @@ body {
   height:40px;
   width:200px;
   color:white;
-  background-color: #0b63ce;
+  background-color: #5B7493;
   border:#155ab2;
 }
 
@@ -330,7 +335,7 @@ body {
 }
 
 .view-mode-button.active {
-  background: #1a73e8;
+  background: #5B7493;
 }
 
 /* 周视图布局 */
@@ -348,7 +353,8 @@ body {
 }
 
 .week-day-card {
-  height:600px;
+  min-height: 600px; /* 设置最小高度为 600px */
+  max-height: none; /* 允许高度自动延长 */
   background: white;
   border-radius: 8px;
   padding: 10px;
@@ -356,7 +362,9 @@ body {
   text-align: center;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
   transition: 0.3s;
+  overflow: visible; /* 确保内容不会被裁剪 */
 }
+
 
 .week-day-card:hover {
   background: #f0f0f0;
@@ -413,7 +421,7 @@ body {
 
 /* 选中的视图模式按钮 */
 .view-mode-toggle button.active {
-  background: #1a73e8;
+  background: #5B7493;
   color: white;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
   border-radius: 6px;
@@ -428,4 +436,8 @@ body {
 /* 按钮之间的间隔 */
 .view-mode-toggle button:not(:last-child) {
   margin-right: 5px;
+}
+
+.c{
+  color:#0858cf
 }

@@ -25,7 +25,7 @@ const ChatbotWindow = ({ events, updateCalendar }) => {
 
   // **发送请求到 OpenAI API**
 
-
+  
 
 
   const parseICSAndUpdateCalendar = (icsData) => {
@@ -74,6 +74,7 @@ const ChatbotWindow = ({ events, updateCalendar }) => {
   
   const sendToOpenAI = async (message) => {
     try {
+        
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -83,7 +84,8 @@ const ChatbotWindow = ({ events, updateCalendar }) => {
             body: JSON.stringify({
                 model: "gpt-3.5-turbo",
                 messages: [
-                  { role: "system", content: "You are a helpful AI assistant that can chat with users and analyze `.ics` schedule files. You read the `.ics` file that uploaded by user, and rearrange them by optimize the time managment, and then MUST return the new in text `.ics` back to the user, you can add new event to the schedule BASE ON THE ORIGINAL VERSION, MERGE THE SIMILAR EVENT IF POSSIBLE. you also do the analysis on the schedule and give some suggestion. if user send a normal chat, you can also do the normal chat. If you return `.ics` formatted data, make sure it's a complete and valid calendar file." },
+                  { role: "system", content: "You are a helpful AI assistant that can analyze and optimize a schedule with in text .ics format. my schedule will be sended as ics file format**TASK:**1. Optimize the schedule by **avoiding overlapping events** and **merging similar events** if I required.2. Try to **group meetings in the same location together** to reduce travel time.3. If possible, **combine events with similar topics** to improve time efficiency.4. Return the updated schedule in a valid in text `.ics` format.5. do the normal conversition if user send normal message"
+         },
                   ...messages.map((msg) => ({
                     role: msg.sender === "bot" ? "assistant" : "user",
                     content: msg.text
@@ -241,7 +243,7 @@ END:VEVENT`;
           </div>
 
           <div className="chatbot-file-upload">
-            <button className="fetch-button" onClick={fetchICSFromCalendar}>Analysis My calendar</button>
+            <button className="fetch-button" onClick={fetchICSFromCalendar}>Analyze My calendar</button>
           </div>
 
           <div className="chatbot-input">
@@ -255,3 +257,15 @@ END:VEVENT`;
 };
 
 export default ChatbotWindow;
+
+
+
+
+
+
+
+
+
+
+
+

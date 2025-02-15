@@ -24,6 +24,22 @@ class MapComponent extends Component {
       currentDate: new Date(),
       weeklyStartDate: this.getStartOfWeek(new Date()), // 获取当前周的起始日期
       
+      selectedUser: "user1", // 用于标识当前上传者
+      userColors: {
+        user1: " #ab545a", // 颜色示例（红色）
+        user2: " #724e52", // 颜色示例（蓝色）
+        user3: " #686789", // 颜色示例（绿色）
+        user4: "rgb(94, 101, 114)", // 颜色示例（橙色）
+      },
+      usHolidays: {
+        "2025-01-01": { name: "New Year's Day" },
+        "2025-07-04": { name: "Independence Day" },
+        "2025-11-27": { name: "Thanksgiving Day" },
+        "2025-12-25": { name: "Christmas Day" },
+        "2025-02-17": { name: "Presidents' Day" },
+        "2025-05-26": { name: "Memorial Day" },
+        "2025-09-01": { name: "Labor Day" },
+      }
     };
     
   }
@@ -108,53 +124,91 @@ class MapComponent extends Component {
 
   // Save event
   saveEvent = () => {
-  const { selectedDate, events, eventTitle, eventDate, eventTime, eventLocation, eventDescription } = this.state;
-  if (!selectedDate || !eventTitle || !eventDate || !eventTime) {
-    alert("Please fill in the required fields.");
-    return;
-  }
-
-  const dateKey = selectedDate.toISOString().split("T")[0];
-
-  const newEvent = {
-    title: eventTitle,
-    date: eventDate,
-    time: eventTime,
-    location: eventLocation,
-    description: eventDescription
-  };
-
-  const updatedEvents = {
-    ...events,
-    [dateKey]: [...(events[dateKey] || []), newEvent] // 允许多个事件
-  };
-
-  this.setState({ 
-    events: updatedEvents, 
-    showModal: false,
-    eventTitle: "",
-    eventDate: "",
-    eventTime: "",
-    eventLocation: "",
-    eventDescription: ""
-  });
+    const { selectedDate, events, eventTitle, eventDate, eventTime, eventLocation, eventDescription } = this.state;
+    
+    if (!selectedDate || !eventTitle || !eventDate || !eventTime) {
+      alert("⚠️ Please fill in the required fields.");
+      return;
+    }
+  
+    const dateKey = selectedDate.toISOString().split("T")[0];
+  
+    const newEvent = {
+      title: eventTitle,
+      date: eventDate,
+      time: eventTime,
+      location: eventLocation,
+      description: eventDescription
+    };
+  
+    // **📌 检查是否有时间冲突**
+    if (events[dateKey]) {
+      const isTimeConflict = events[dateKey].some(
+        (existingEvent) => existingEvent.time === newEvent.time
+      );
+  
+      if (isTimeConflict) {
+        alert(`⚠️ Time conflict detected! An event already exists at ${eventTime}.`);
+        return; // 直接返回，不添加事件
+      }
+    }
+  
+    // **📌 没有冲突，则添加事件**
+    const updatedEvents = {
+      ...events,
+      [dateKey]: [...(events[dateKey] || []), newEvent] // 允许多个非冲突事件
+    };
+  
+    this.setState({ 
+      events: updatedEvents, 
+      showModal: false,
+      eventTitle: "",
+      eventDate: "",
+      eventTime: "",
+      eventLocation: "",
+      eventDescription: ""
+    });
+  
+    alert("✅ Event added successfully!");
   };
   
 
+
+
+
   updateCalendar = (newEventsArray) => {
     this.setState((prevState) => {
-        const updatedEvents = { ...prevState.events };
+        // 确保创建一个新的对象，避免 React 识别不到变化
+        let updatedEvents = JSON.parse(JSON.stringify(prevState.events)); 
 
-        newEventsArray.forEach((event) => {
-            const dateKey = event.date;
-            updatedEvents[dateKey] = [];
-            updatedEvents[dateKey].push(event);
+        newEventsArray.forEach((newEvent) => {
+            const dateKey = newEvent.date;
+
+            // **📌 如果该日期没有事件，则直接添加**
+            if (!updatedEvents[dateKey]) {
+                updatedEvents[dateKey] = [newEvent];
+                return;
+            }
+
+            // **📌 检查是否有时间冲突**
+            const isTimeConflict = updatedEvents[dateKey].some(
+                (existingEvent) =>
+                    existingEvent.time === newEvent.time ||  // **同一时间不添加**
+                    (existingEvent.time < newEvent.time && existingEvent.endTime > newEvent.time) || 
+                    (newEvent.time < existingEvent.time && newEvent.endTime > existingEvent.time)
+            );
+
+            // **📌 只有当没有时间冲突时才添加新事件**
+            if (!isTimeConflict) {
+                updatedEvents[dateKey].push(newEvent);
+            }
         });
 
+        console.log("✅ Calendar will update with:", updatedEvents); // **检查数据是否正确**
         return { events: updatedEvents };
     }, () => {
-        console.log("✅ Calendar successfully updated:", this.state.events);
-        this.forceUpdate();
+        console.log("✅ Calendar successfully updated (merged without time conflicts):", this.state.events);
+        this.forceUpdate();  // **强制刷新组件**
     });
 };
 
@@ -163,83 +217,118 @@ class MapComponent extends Component {
 
 
 
-  
 
-
-  
 parseICS = async (icsData) => {
-    try {
+  try {
       const events = [];
       const lines = icsData.split("\n");
       let currentEvent = {};
 
       for (let line of lines) {
-        line = line.trim();
+          line = line.trim();
 
-        if (line.startsWith("BEGIN:VEVENT")) {
-          currentEvent = {};
-        } else if (line.startsWith("SUMMARY:")) {
-          currentEvent.title = line.replace("SUMMARY:", "").trim();
-        } else if (line.startsWith("DTSTART:")) {
-          currentEvent.date = line.replace("DTSTART:", "").substring(0, 8); // 获取 YYYYMMDD
-          currentEvent.time = line.replace("DTSTART:", "").substring(9, 13); // 获取 HHMM
-        } else if (line.startsWith("DTEND:")) {
-          currentEvent.endTime = line.replace("DTEND:", "").substring(9, 13); // 获取 HHMM
-        } else if (line.startsWith("LOCATION:")) {
-          currentEvent.location = line.replace("LOCATION:", "").trim();
-        } else if (line.startsWith("DESCRIPTION:")) {
-          currentEvent.description = line.replace("DESCRIPTION:", "").trim();
-        } else if (line.startsWith("END:VEVENT")) {
-          events.push(currentEvent);
-        }
+          if (line.startsWith("BEGIN:VEVENT")) {
+              currentEvent = {};
+          } else if (line.startsWith("SUMMARY:")) {
+              currentEvent.title = line.replace("SUMMARY:", "").trim();
+          } else if (line.startsWith("DTSTART")) {
+              const dateRaw = line.split(":")[1]?.trim(); // Handle cases where line.split(":")[1] is undefined
+              if (dateRaw) {
+                  if (dateRaw.includes("T")) {
+                      currentEvent.date = `${dateRaw.substring(0, 4)}-${dateRaw.substring(4, 6)}-${dateRaw.substring(6, 8)}`;
+                      currentEvent.time = `${dateRaw.substring(9, 11)}:${dateRaw.substring(11, 13)}`;
+                  } else {
+                      currentEvent.date = `${dateRaw.substring(0, 4)}-${dateRaw.substring(4, 6)}-${dateRaw.substring(6, 8)}`;
+                      currentEvent.time = "00:00"; // Default time if only date is given
+                  }
+              }
+          } else if (line.startsWith("DTEND")) {
+              const dateRaw = line.split(":")[1]?.trim();
+              if (dateRaw) {
+                  currentEvent.endTime = dateRaw.includes("T")
+                      ? `${dateRaw.substring(9, 11)}:${dateRaw.substring(11, 13)}`
+                      : "23:59"; // Default end time if only date is given
+              }
+          } else if (line.startsWith("LOCATION:")) {
+              currentEvent.location = line.replace("LOCATION:", "").trim();
+          } else if (line.startsWith("DESCRIPTION:")) {
+              currentEvent.description = line.replace("DESCRIPTION:", "").trim();
+          } else if (line.startsWith("END:VEVENT")) {
+              events.push(currentEvent);
+          }
       }
 
       return events;
-    } catch (error) {
+  } catch (error) {
       console.error("❌ Failed to parse .ics file:", error);
       return [];
-    }
-  };
+  }
+};
+
+  
+
+
+  
+
+  
+  
+  
+  
 handleICSUpload = async (event) => {
   const uploadedFile = event.target.files[0];
   if (!uploadedFile) return;
 
   const reader = new FileReader();
   reader.onload = async (e) => {
-    const icsData = e.target.result;
-    const parsedEvents = await this.parseICS(icsData);
+      const icsData = e.target.result;
+      const parsedEvents = await this.parseICS(icsData);
+      const userId = this.state.selectedUser; // 获取当前上传者 ID
 
-    if (parsedEvents.length === 0) {
-      alert("📭 No valid events found in the .ics file.");
-      return;
-    }
-
-    // **格式化解析的数据并合并到现有 events 状态**
-    const updatedEvents = { ...this.state.events };
-
-    parsedEvents.forEach((event) => {
-      const dateKey = `${event.date.substring(0, 4)}-${event.date.substring(4, 6)}-${event.date.substring(6, 8)}`;
-
-      if (!updatedEvents[dateKey]) {
-        updatedEvents[dateKey] = [];
+      if (parsedEvents.length === 0) {
+          alert("📭 No valid events found in the .ics file.");
+          return;
       }
 
-      updatedEvents[dateKey].push({
-        title: event.title || "Untitled Event",
-        date: dateKey,
-        time: event.time ? `${event.time.substring(0, 2)}:${event.time.substring(2, 4)}` : "00:00",
-        location: event.location || "No location",
-        description: event.description || "",
-      });
-    });
+      console.log(`📂 Parsed ICS events for ${userId}:`, parsedEvents); 
 
-    // **更新状态**
-    this.setState({ events: updatedEvents });
-    alert("✅ Calendar updated successfully!");
+      this.setState((prevState) => {
+          const updatedEvents = JSON.parse(JSON.stringify(prevState.events));
+
+          parsedEvents.forEach((event) => {
+              const dateKey = event.date;
+              event.userId = userId; // 绑定用户 ID
+
+              if (!updatedEvents[dateKey]) {
+                  updatedEvents[dateKey] = [];
+              }
+
+              // **检查是否已存在相同时间的事件**
+              const isDuplicate = updatedEvents[dateKey].some(
+                  (existingEvent) => existingEvent.time === event.time && existingEvent.userId === userId
+              );
+
+              if (!isDuplicate) {
+                  updatedEvents[dateKey].push(event);
+              }
+          });
+
+          console.log("✅ Merged events after ICS upload:", updatedEvents);
+          return { events: updatedEvents };
+      }, () => {
+          alert(`✅ Calendar updated successfully for ${userId}!`);
+          this.forceUpdate();
+      });
   };
 
   reader.readAsText(uploadedFile);
-  };
+};
+
+
+componentDidUpdate(prevProps, prevState) {
+  if (prevState.events !== this.state.events) {
+      console.log("📅 Calendar successfully updated:", this.state.events);
+  }
+}
   
 
 generateICS = () => {
@@ -276,8 +365,8 @@ END:VEVENT`;
 
 
 renderDays = () => {
-  const {currentDate,weeklyStartDate,events,viewMode} = this.state;
-  console.log("🔄 Rendering calendar with events:", events); // **调试：确保数据被读取**
+  const { currentDate, weeklyStartDate, events, viewMode, userColors, usHolidays } = this.state;
+  console.log("🔄 Rendering calendar with events:", events);
   const today = new Date();
   let days = [];
 
@@ -288,39 +377,48 @@ renderDays = () => {
     const daysInMonth = endOfMonth.getDate();
     const startDayOfWeek = startOfMonth.getDay();
 
-    // 填充空白占位符
     for (let i = 0; i < startDayOfWeek; i++) {
       days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
     }
 
-    // 填充当前月份的日期
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
       const dateKey = date.toISOString().split("T")[0];
       const isToday = date.toDateString() === today.toDateString();
       const eventList = events[dateKey] || [];
+      const holiday = usHolidays[dateKey]; // 检查是否是节假日
 
       days.push(
         <div
           key={i}
-          className={`calendar-day card ${isToday ? "today" : ""}`}
+          className={`calendar-day card ${isToday ? "today" : ""} ${holiday ? "holiday" : ""}`}
           onClick={() => this.selectDate(date)}
+          style={holiday ? { backgroundColor: "#FFD700", fontWeight: "bold" } : {}}
         >
           <div className="date-header">
             <span className="date-number">{i}</span>
             {isToday && <span className="today-label">Today</span>}
+            {holiday && <span className="holiday-label">🎉 {holiday.name}</span>}
           </div>
 
           {/* 事件展示 */}
           <div className="events-container">
             {eventList.length > 0 ? (
               eventList.map((event, index) => (
-                <div key={index} className="event">
-                  <div className="event-time">🕒 {event.time} -- {event.title}</div>
+                <div 
+                  key={index} 
+                  className="event"
+                  style={{ 
+                    backgroundColor: userColors[event.userId] || "#ddd", 
+                    color: "#fff" 
+                  }}
+                  title={`Title: ${event.title}\nTime: ${event.time}\nUser: ${event.userId}`}
+                >
+                  <span className="event-label">{event.userId}</span> 🕒 {event.time} -- {event.title}
                 </div>
               ))
             ) : (
-              <div className="no-events">No events</div>
+              holiday ? null : <div className="no-events">No events</div>
             )}
           </div>
         </div>
@@ -334,28 +432,39 @@ renderDays = () => {
       const dateKey = date.toISOString().split("T")[0];
       const isToday = date.toDateString() === today.toDateString();
       const eventList = events[dateKey] || [];
+      const holiday = usHolidays[dateKey]; // 检查是否是节假日
 
       days.push(
         <div
           key={i}
-          className={`week-day-card ${isToday ? "today" : ""}`}
+          className={`week-day-card ${isToday ? "today" : ""} ${holiday ? "holiday" : ""}`}
           onClick={() => this.selectDate(date)}
+          style={holiday ? { backgroundColor: "#FFD700", fontWeight: "bold" } : {}}
         >
           <div className="week-date">
             <span className="week-day">{date.toLocaleDateString("en-US", { weekday: "short" })}</span>
             <span className={`week-number ${isToday ? "highlight" : ""}`}>{date.getDate()}</span>
+            {holiday && <span className="holiday-label">🎉 {holiday.name}</span>}
           </div>
 
           {/* 事件展示 */}
           <div className="events-container">
             {eventList.length > 0 ? (
               eventList.map((event, index) => (
-                <div key={index} className="event">
-                  🕒 {event.time} - {event.title}
+                <div 
+                  key={index} 
+                  className="event"
+                  style={{ 
+                    backgroundColor: userColors[event.userId] || "#ddd", 
+                    color: "#fff"
+                  }}
+                  title={`Title: ${event.title}\nTime: ${event.time}\nUser: ${event.userId}`}
+                >
+                  <span className="event-label">{event.userId}</span> 🕒 {event.time} - {event.title}
                 </div>
               ))
             ) : (
-              <div className="no-events">No events</div>
+              holiday ? null : <div className="no-events">No events</div>
             )}
           </div>
         </div>
@@ -365,6 +474,7 @@ renderDays = () => {
 
   return days;
 };
+
 
 
   
@@ -430,11 +540,19 @@ renderDays = () => {
           <div className="banner-left">
             <h1>Day-Manager</h1>
           </div>
-          <div className="banner-right">
-            <button className="user-icon" onClick={() => alert("User menu clicked!")}>
-              <img src={usericon} alt="User Icon" />
-            </button>
+          <div className="user-selection">
+            <label>Select User:</label>
+            <select 
+              value={this.state.selectedUser} 
+              onChange={(e) => this.setState({ selectedUser: e.target.value })}
+            >
+              <option value="user1">User 1</option>
+              <option value="user2">User 2</option>
+              <option value="user3">User 3</option>
+              <option value="user4">User 4</option>
+            </select>
           </div>
+
         </header>
 
       
